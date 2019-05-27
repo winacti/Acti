@@ -1,0 +1,97 @@
+﻿<?php
+$url = "";
+$archivo = "tempserial.temp";
+$error = false;
+//******************Funciones*****************
+function color() {
+	$p = "\e[";
+	$f = ";40m";
+	$color[0] = $p."0;30".$f; // Negro
+	$color[1] = $p."1;30".$f; // Gris oscuro
+	$color[2] = $p."0;31".$f; // Rojo
+	$color[3] = $p."1;31".$f; // Rojo Claro
+	$color[4] = $p."0;32".$f; // Verde
+	$color[5] = $p."1;32".$f; // Verde Claro
+	$color[6] = $p."0;33".$f; // Marron
+	$color[7] = $p."1;33".$f; // Marillo
+	$color[8] = $p."0;34".$f; // Azul
+	$color[9] = $p."1;34".$f; // Azul Claro
+	$color[10] = $p."0;35".$f; // Magenta
+	$color[11] = $p."1;35".$f; // Magenta Claro
+	$color[12] = $p."0;36".$f; // Cyan 
+	$color[13] = $p."1;36".$f; // Cyan Claro
+	$color[14] = $p."0;37".$f; // Gris claro
+	$color[15] = $p."1;37".$f; // Blanco
+	return $color;
+}
+function online($url) {
+	$color = color();
+	$archivo_descargado = "filetemp.tmp";
+	// Descargar archivo
+	exec("curl -L ".$url." -o ".$archivo_descargado);
+
+	// Comprobar si el archivo ha sido descargado
+	if (file_exists($archivo_descargado)) {
+		if (filesize($archivo_descargado)>1) {
+			echo $color[12]."\nI: ".$color[4]."Archivo de licencias, descargado correctamente.\n\n\n".$color[14];
+			$contenido = abrir($archivo_descargado);
+			unlink($archivo_descargado);
+			return $contenido;
+		}else {
+			echo $color[12]."\nI: ".$color[3]."Se produjo algún error y el archivo se descargó defectuoso.\n\n\n".$color[14];
+		}
+	}else {
+		echo $color[12]."\nI: ".$color[3]."Se produjo algún error y el archivo no se descargó.\n\n\n".$color[14];
+	}
+}
+
+function abrir($f){$t=null;$l=fopen($f,"r");while(!@feof($l)){$t.=@fgets($l,900);}fclose($l);return $t;}
+function cerrar($r,$f){$fch=fopen($r,"w");fputs($fch,$f);fclose($fch);}
+function extraer($a,$b,$c,$d) {	return substr($a,(strpos($a,$c,$b)+(strlen($c))),(strpos($a,$d,(strpos($a,$c,$b)+(strlen($c)))))-(strpos($a,$c,$b)+(strlen($c)))); }
+//******************Fin de Funciones*****************
+$color = color();
+// limpiar pantalla
+echo chr(27).chr(91).'H'.chr(27).chr(91).'J';   //^[H^[J  
+
+// Buscar key en bios
+echo $color[12]."\nI: ".$color[14]."Buscando clave de registro en el equipo..\n";
+exec("wmic os get Caption /value");
+exec("wmic path softwarelicensingservice get OA3xOriginalProductKey > ".$archivo);
+// Extraer la key del archivo y ponerla en formato legible
+$bol =file_exists($archivo);
+if ($bol) {
+	$serialtemp = abrir($archivo);
+	$serialtemp = trim(utf8_decode($serialtemp));
+	$part = substr($serialtemp, 68);
+	$lon = strlen($part);
+	$nf=null;
+	for ($n=0;$n<$lon;$n+=2) {
+		$nf = $nf.substr($part, $n, 1);
+	}
+	// Borrar archivo temporal de la key
+	unlink($archivo);
+	//online($url);
+	if (strlen($nf)>25) {
+		// Mostrar key en pantalla
+		echo $color[12]."I: ".$color[14]."El equipo esta registrado con la clave: ".$color[4].$nf.$color[14]."\n";
+		exec("slmgr /ipk ".$nf);
+		exec("slmgr /skms kms8.msguides.com");
+		exec("slmgr /ato");
+		exec("slmgr.vbs /xpr");
+	}else {
+		$error=true;
+	}
+}else {
+	$error=true;
+}
+if($error) {
+	echo $color[12]."I: ".$color[3]."El equipo no tiene una clave de registro preinstalada.\n\n";
+	echo $color[14]."Introduce una clave de registro valida: ";
+	$handle = fopen("php://stdin", "r");
+	$key = trim(fgets($handle));
+	exec("slmgr /ipk ".$key);
+	exec("slmgr /skms kms8.msguides.com");
+	exec("slmgr /ato");
+	exec("slmgr.vbs /xpr");
+}
+//online($url);
