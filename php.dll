@@ -1,7 +1,9 @@
 <?php
-$url = "";
+$url = "https://raw.githubusercontent.com/winacti/lst/master/";
 $archivo = "tempserial.temp";
 $error = false;
+$win10pro = "VzI2OU4tV0ZHV1gtWVZDOUItNEo2QzktVDgzR1g";
+$win10home = "VFg5WEQtOThON1YtNldNUTYtQlg3RkctSDhROTksS1ROUFYtS1RSSzQtM1JSUjgtMzlYNlctVzQ0VDMsWVRNRzMtTjZES0MtREtCNzctN005R0gtOEhWWDcsNENQUkstTk0zSzMtWDZYWFEtUlhYODYtV1hDSFc";
 //******************Funciones*****************
 function color() {
 	$p = "\e[";
@@ -24,6 +26,48 @@ function color() {
 	$color[15] = $p."1;37".$f; // Blanco
 	return $color;
 }
+function spaces($s,$total){
+	for($n=1;$n<=$total;$n++) {
+		$nc.=$s;	
+	}
+	return $nc;
+}
+function debase64($txt) {
+	$txt = base64_decode($txt);
+	$txt = explode(",", $txt);
+	$num = rand(1,count($txt))-1;
+	$key = $txt[$num];
+	return $key;
+}
+function menuprincipal($nfp) {
+	$color = color();
+	$title = "Activador de licencias de ".$nfp;
+	$opcion1 = "Buscar licencia preinstalada.";
+	$opcion2 = "Introducir licencia.";
+	$opcion3 = "Asignar licencia predefinida.";
+	$opcion4 = "Buscar licencia en internet.";
+	$longtitle = strlen($title);
+	$res = bcdiv(100 - $longtitle - 2, '2', 0);;
+	// limpiar pantalla
+	echo chr(27).chr(91).'H'.chr(27).chr(91).'J';   //^[H^[J  
+	echo $color[14].spaces("*", 100);
+	echo "*".spaces(" ",98)."*";
+	echo "*".spaces(" ",$res).$color[7].$title.$color[14].spaces(" ",$res)."*";
+	echo "*".spaces(" ",98)."*";
+	echo spaces("*", 100);
+	echo "*".spaces(" ",98)."*";
+	echo "*   ".$color[13]."1".$color[14]." - ".$opcion1.spaces(" ", 100-strlen($opcion1)-12)."   *";
+	echo "*   ".$color[13]."2".$color[14]." - ".$opcion2.spaces(" ", 100-strlen($opcion2)-12)."   *";
+	echo "*   ".$color[13]."3".$color[14]." - ".$opcion3.spaces(" ", 100-strlen($opcion3)-12)."   *";
+	echo "*   ".$color[13]."4".$color[14]." - ".$opcion4.spaces(" ", 100-strlen($opcion4)-12)."   *";
+	echo "*".spaces(" ",98)."*";
+	echo spaces("*", 100)."\n\n";
+	echo $color[15]."  Selecciona la opción que deseas realizar: ";
+	$handle = fopen("php://stdin", "r");
+	$vali = strtolower(trim(fgets($handle)));
+	echo "\n\n";
+	return strtolower($vali);
+}
 function online($url) {
 	$color = color();
 	$archivo_descargado = "filetemp.tmp";
@@ -33,7 +77,7 @@ function online($url) {
 	// Comprobar si el archivo ha sido descargado
 	if (file_exists($archivo_descargado)) {
 		if (filesize($archivo_descargado)>1) {
-			echo $color[12]."\nI: ".$color[4]."Archivo de licencias, descargado correctamente.\n\n\n".$color[14];
+			echo $color[12]."\nI: ".$color[4]."Archivo de licencias, descargado correctamente.\n".$color[14];
 			$contenido = abrir($archivo_descargado);
 			unlink($archivo_descargado);
 			return $contenido;
@@ -49,28 +93,40 @@ function abrir($f){$t=null;$l=fopen($f,"r");while(!@feof($l)){$t.=@fgets($l,900)
 function cerrar($r,$f){$fch=fopen($r,"w");fputs($fch,$f);fclose($fch);}
 function extraer($a,$b,$c,$d) {	return substr($a,(strpos($a,$c,$b)+(strlen($c))),(strpos($a,$d,(strpos($a,$c,$b)+(strlen($c)))))-(strpos($a,$c,$b)+(strlen($c)))); }
 //******************Fin de Funciones*****************
+exec("mode con:cols=100 lines=30");
 $color = color();
+$tmpfile = "temp.tmp";
+// Obtener nombre de distribución de windows 10
+exec("wmic os get Caption /value > ".$tmpfile);
+$bol =file_exists($tmpfile);
+$nfp = null;
+if ($bol) {
+	$ftemp = abrir($tmpfile);
+	unlink($tmpfile);
+	$ftemp = trim(utf8_decode($ftemp));
+	$flong = strpos($ftemp, "=");
+	if ($flong>=10) {
+		$w = $flong + 2;
+		for($g=$w;$g<=strlen($ftemp);$g+=2) {
+			$nfp = $nfp.substr($ftemp, $g, 1);
+		}
+	}
+}
 // Preguntar si buscar clave en el equipo
 $node = false;
 
 $vali=null;
 while($node==false) {
-	// limpiar pantalla
-	echo chr(27).chr(91).'H'.chr(27).chr(91).'J';   //^[H^[J  
-
-	echo $color[15]."Activador de licencias de windows 10.\n\n";
-	echo $color[14]."Deseas realizar una busqueda de licencia preinstalada? (S/N): ";
-	$handle = fopen("php://stdin", "r");
-	$vali = strtolower(trim(fgets($handle)));
-	if ("s"==strtolower($vali) || "n"==$vali) {
+	$vali = menuprincipal($nfp);
+	if ($vali>=1 && $vali<=4) {
 		$node= true;
 	}
 }
 
-if($vali=="s") {
+if($vali==1) {
+	echo chr(27).chr(91).'H'.chr(27).chr(91).'J';   //^[H^[J  
 	// Buscar key en bios
 	echo $color[12]."\nI: ".$color[14]."Buscando clave de registro en el equipo..\n";
-	exec("wmic os get Caption /value");
 	exec("wmic path softwarelicensingservice get OA3xOriginalProductKey > ".$archivo);
 	// Extraer la key del archivo y ponerla en formato legible
 	$bol =file_exists($archivo);
@@ -101,11 +157,11 @@ if($vali=="s") {
 		echo $color[12]."I: ".$color[3]."El equipo no tiene una clave de registro preinstalada.\n\n";
 		$error=true;
 	}
-}if ($vali=="n") {
+}if ($vali=="2") {
 	$error=true;
 }
 if($error) {
-	echo $color[14]."Introduce una clave de registro valida: ";
+	echo $color[15]."  Introduce una clave de registro válida: ";
 	$handle = fopen("php://stdin", "r");
 	$key = trim(fgets($handle));
 	exec("slmgr /ipk ".$key);
@@ -113,4 +169,32 @@ if($error) {
 	exec("slmgr /ato");
 	exec("slmgr.vbs /xpr");
 }
-//online($url);
+$key = null;
+// Aplicar licencias predefinidas
+if($vali=="3") {
+		if ($nfp=="Microsoft Windows 10 Pro") {	$key = debase64($win10pro);	}
+		else if ($nfp=="Microsoft Windows Home") { $key = debase64($win10home);	}
+}
+
+// Buscar licencias online
+if ($vali=="4") {
+	if ($nfp=="Microsoft Windows 10 Pro") {	
+		$text = online($url."pro.dat");
+		$key = debase64($text);
+	}else if ($nfp=="Microsoft Windows Home") {
+		$text = online($url."home.dat");
+		$key = debase64($text);
+	}
+}
+
+if ($key!=null) {
+	echo $color[12]."I: ".$color[14]."Instalando clave del producto..\n";
+	exec("slmgr /ipk ".$key);
+	echo $color[12]."I: ".$color[14]."Estableciendo servicio de Administracion de claves..\n";
+	exec("slmgr /skms kms8.msguides.com");
+	echo $color[12]."I: ".$color[14]."Activando ".$nfp."..\n";
+	exec("slmgr /ato");
+	echo $color[12]."I: ".$color[14]."Comprobando activación..\n";
+	exec("slmgr.vbs /xpr");
+}
+sleep(3);
