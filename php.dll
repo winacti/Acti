@@ -68,6 +68,16 @@ function menuprincipal($nfp) {
 	echo "\n\n";
 	return strtolower($vali);
 }
+function countdown($seconds) { 
+	$color = color();
+	for ($i = $seconds; $i >= 1; $i--) {
+		if ($i>3) { $cc = $color[7]; }
+		else if ($i<=3) { $cc = $color[13]; }
+		echo $color[12]."I: ".$color[14]."La ventana se cerrará en ".$cc.$i.$color[14]." segundos..\n";
+		sleep(1);
+		echo "\033[1A";
+	}
+}
 function online($url) {
 	$color = color();
 	$archivo_descargado = "filetemp.tmp";
@@ -145,9 +155,13 @@ if($vali==1) {
 		if (strlen($nf)>25) {
 			// Mostrar key en pantalla
 			echo $color[12]."I: ".$color[14]."El equipo esta registrado con la clave: ".$color[4].$nf.$color[14]."\n";
+			echo $color[12]."I: ".$color[14]."Instalando clave del producto..\n";
 			exec("slmgr /ipk ".$nf);
+			echo $color[12]."I: ".$color[14]."Estableciendo servicio de Administracion de claves..\n";
 			exec("slmgr /skms kms8.msguides.com");
+			echo $color[12]."I: ".$color[14]."Activando ".$nfp."..\n";
 			exec("slmgr /ato");
+			echo $color[12]."I: ".$color[14]."Comprobando activación..\n";
 			exec("slmgr.vbs /xpr");
 		}else {
 			echo $color[12]."I: ".$color[3]."El equipo no tiene una clave de registro preinstalada.\n\n";
@@ -160,16 +174,12 @@ if($vali==1) {
 }if ($vali=="2") {
 	$error=true;
 }
+$key = null;
 if($error) {
 	echo $color[15]."  Introduce una clave de registro válida: ";
 	$handle = fopen("php://stdin", "r");
 	$key = trim(fgets($handle));
-	exec("slmgr /ipk ".$key);
-	exec("slmgr /skms kms8.msguides.com");
-	exec("slmgr /ato");
-	exec("slmgr.vbs /xpr");
 }
-$key = null;
 // Aplicar licencias predefinidas
 if($vali=="3") {
 		if ($nfp=="Microsoft Windows 10 Pro") {	$key = debase64($win10pro);	}
@@ -197,4 +207,9 @@ if ($key!=null) {
 	echo $color[12]."I: ".$color[14]."Comprobando activación..\n";
 	exec("slmgr.vbs /xpr");
 }
-sleep(3);
+if ($key==$null) {
+	echo $color[12]."\nI: ".$color[14]."No se ha introducido una licencia.\n";
+}
+echo "\n";
+// Cuenta atrás para finalizar programa de activacion
+countdown(10);
