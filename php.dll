@@ -52,7 +52,7 @@ function checkUpdate($version) {
 	exec("curl -s -L ".$url." -o ".$vers);
 	$update = trim(abrir($vers));
 	unlink($vers);
-	$result = version_compare($version, $update, "<=");
+	$result = version_compare($version, $update, "<");
 	
 	// Comprobar si existe actualizacion
 	if ($result) {
