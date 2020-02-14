@@ -1,2 +1,2 @@
-# Acti
+# WinActi
 Activador
