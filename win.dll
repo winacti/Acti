@@ -1,5 +1,5 @@
 <?php
-$version = "1.0.2";
+$version = "1.0.3";
 $url = "https://raw.githubusercontent.com/winacti/Acti/master/dat/";
 $archivo = "tempserial.temp";
 $error = false;
